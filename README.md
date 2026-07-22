@@ -2,7 +2,7 @@
 
 FairShare is a modern, full-stack expense-splitting application built to take the headache out of shared bills. Whether you are splitting rent with roommates, organizing a group trip, or just keeping track of dinner tabs, FairShare ensures everyone knows exactly who owes what.
 
-![FairShare Dashboard Overview]() *(Consider adding a screenshot of your app here!)*
+
 
 ## ✨ Features
 

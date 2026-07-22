@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, DollarSign, List, Receipt, HandCoins, Calculator, Percent, Trash2, Edit2, Undo, X, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
+import { ArrowLeft, DollarSign, List, Receipt, HandCoins, Calculator, Percent, Trash2, Edit2, Undo, X, ChevronLeft, ChevronRight, ChevronDown, Wallet, TrendingDown } from 'lucide-react';
 import { apiFetch } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 import { Avatar } from '../components/Avatar';
@@ -32,7 +32,6 @@ export default function GroupFinances() {
   const [settleToUser, setSettleToUser] = useState('');
   const [settleAmount, setSettleAmount] = useState('');
   
-  const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   
   const [search, setSearch] = useState('');
@@ -256,65 +255,108 @@ export default function GroupFinances() {
   if (loading) return <div className="text-center py-12">Loading group finances...</div>;
   if (!group) return null;
 
+  const currentUserRole = group.members?.find((m: any) => m.user_id === currentUserId)?.role;
+  const isViewer = currentUserRole === 'VIEWER';
+
+  const totalBudget = Number(group.budget || 0);
+  const totalSpent = activities.filter(a => a.type === 'expense').reduce((acc, act) => acc + Number(act.data.amount), 0);
+  const totalRemaining = totalBudget - totalSpent;
+
   return (
     <div className="max-w-6xl mx-auto">
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
       
       <div className="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <Link to="/expenses" className="text-primary hover:underline flex items-center mb-2 font-medium">
+          <Link to="/expenses" className="text-primary dark:text-indigo-400 hover:underline flex items-center mb-2 font-medium">
             <ArrowLeft className="w-4 h-4 mr-1" /> Back to group expenses
           </Link>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-800">{group.name} Finances</h1>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{group.name} Finances</h1>
           </div>
         </div>
-        <div className="flex gap-2">
-          <button 
-            onClick={() => {
-              if (!showSettleUp) {
-                setSettleToUser('');
-                setSettleAmount('');
-              }
-              setShowSettleUp(!showSettleUp);
-              setShowAddExpense(false);
-            }} 
-            className="bg-accent text-white px-4 py-2 rounded-lg font-medium hover:bg-opacity-90 transition shadow-sm flex items-center"
-          >
-            <HandCoins className="w-4 h-4 mr-2" />
-            Settle up
-          </button>
-          <button 
-            onClick={() => {
-              if (!showAddExpense) {
-                setEditingExpenseId(null);
-                setExpenseAmount('');
-                setExpenseDesc('');
-                setSplitType('EQUAL');
-                const initSplits: Record<string, string> = {};
-                group.members?.forEach((m: any) => initSplits[m.user_id] = '');
-                setSplits(initSplits);
-              }
-              setShowAddExpense(!showAddExpense);
-              setShowSettleUp(false);
-            }} 
-            className="bg-secondary text-white px-4 py-2 rounded-lg font-medium hover:bg-opacity-90 transition shadow-sm flex items-center"
-          >
-            {showAddExpense && !editingExpenseId ? <X className="w-4 h-4 mr-2" /> : <Receipt className="w-4 h-4 mr-2" />}
-            {showAddExpense && !editingExpenseId ? 'Cancel' : 'Add expense'}
-          </button>
+        {!isViewer && (
+          <div className="flex gap-2">
+            <button 
+              onClick={() => {
+                if (!showSettleUp) {
+                  setSettleToUser('');
+                  setSettleAmount('');
+                }
+                setShowSettleUp(!showSettleUp);
+                setShowAddExpense(false);
+              }} 
+              className="bg-accent text-white px-4 py-2 rounded-lg font-medium hover:bg-opacity-90 transition shadow-sm flex items-center"
+            >
+              <HandCoins className="w-4 h-4 mr-2" />
+              Settle up
+            </button>
+            <button 
+              onClick={() => {
+                if (!showAddExpense) {
+                  setEditingExpenseId(null);
+                  setExpenseAmount('');
+                  setExpenseDesc('');
+                  setSplitType('EQUAL');
+                  const initSplits: Record<string, string> = {};
+                  group.members?.forEach((m: any) => initSplits[m.user_id] = '');
+                  setSplits(initSplits);
+                }
+                setShowAddExpense(!showAddExpense);
+                setShowSettleUp(false);
+              }} 
+              className="bg-secondary text-white px-4 py-2 rounded-lg font-medium hover:bg-opacity-90 transition shadow-sm flex items-center"
+            >
+              {showAddExpense && !editingExpenseId ? <X className="w-4 h-4 mr-2" /> : <Receipt className="w-4 h-4 mr-2" />}
+              {showAddExpense && !editingExpenseId ? 'Cancel' : 'Add expense'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 flex items-center transition-colors duration-200">
+          <div className="bg-blue-100 dark:bg-blue-900/30 p-4 rounded-full mr-4">
+            <Wallet className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Total Budget</div>
+            <div className="text-2xl font-bold text-slate-800 dark:text-slate-100">${totalBudget.toFixed(2)}</div>
+          </div>
+        </div>
+        
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 flex items-center transition-colors duration-200">
+          <div className="bg-red-100 dark:bg-red-900/30 p-4 rounded-full mr-4">
+            <TrendingDown className="w-6 h-6 text-red-600 dark:text-red-400" />
+          </div>
+          <div>
+            <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Total Spent</div>
+            <div className="text-2xl font-bold text-slate-800 dark:text-slate-100">${totalSpent.toFixed(2)}</div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 flex items-center transition-colors duration-200">
+          <div className={`p-4 rounded-full mr-4 ${totalRemaining >= 0 ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
+            <DollarSign className={`w-6 h-6 ${totalRemaining >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} />
+          </div>
+          <div>
+            <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Total Remaining</div>
+            <div className={`text-2xl font-bold ${totalRemaining >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+              ${totalRemaining.toFixed(2)}
+            </div>
+          </div>
         </div>
       </div>
 
       {showSettleUp && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-accent/20 mb-8 max-w-2xl mx-auto ring-1 ring-accent/10">
-          <h3 className="font-bold text-slate-800 mb-4 flex items-center text-lg"><HandCoins className="w-5 h-5 mr-2 text-accent" /> Record a payment</h3>
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-accent/20 mb-8 max-w-2xl mx-auto ring-1 ring-accent/10">
+          <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center text-lg"><HandCoins className="w-5 h-5 mr-2 text-accent" /> Record a payment</h3>
           <form onSubmit={handleSettleSubmit} className="space-y-4">
             <div className="flex items-center gap-2">
               <select 
                 value={settleDirection} 
                 onChange={(e: any) => setSettleDirection(e.target.value)}
-                className="p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent outline-none font-medium text-slate-700 bg-slate-50"
+                className="p-2 border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-accent outline-none font-medium text-slate-700 bg-slate-50 dark:bg-slate-700 dark:text-white"
               >
                 <option value="i_paid">You paid</option>
                 <option value="i_was_paid">You were paid by</option>
@@ -324,7 +366,7 @@ export default function GroupFinances() {
                 value={settleToUser} 
                 onChange={(e) => setSettleToUser(e.target.value)}
                 required
-                className="flex-1 p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent outline-none font-medium text-slate-700 bg-slate-50"
+                className="flex-1 p-2 border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-accent outline-none font-medium text-slate-700 bg-slate-50 dark:bg-slate-700 dark:text-white"
               >
                 <option value="" disabled>Select member...</option>
                 {group.members?.filter((m: any) => m.user_id !== currentUserId).map((m: any) => (
@@ -345,7 +387,7 @@ export default function GroupFinances() {
                 onChange={e => setSettleAmount(e.target.value)} 
                 placeholder="0.00" 
                 required
-                className="w-full pl-8 p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-accent outline-none text-lg font-bold shadow-sm"
+                className="w-full pl-8 p-3 border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-accent outline-none text-lg font-bold shadow-sm dark:bg-slate-700 dark:text-white"
               />
             </div>
             <button disabled={isSubmitting} type="submit" className="w-full bg-accent text-white py-3 rounded-md font-bold hover:bg-opacity-90 transition disabled:opacity-50 shadow-sm text-lg mt-2">
@@ -356,9 +398,9 @@ export default function GroupFinances() {
       )}
 
       {showAddExpense && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-secondary/20 mb-8 max-w-2xl mx-auto ring-1 ring-secondary/10">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-secondary/20 mb-8 max-w-2xl mx-auto ring-1 ring-secondary/10 transition-colors duration-200">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold text-slate-800 flex items-center text-lg">
+            <h3 className="font-bold text-slate-800 dark:text-slate-100 flex items-center text-lg">
               <Receipt className="w-5 h-5 mr-2 text-secondary" /> 
               {editingExpenseId ? 'Edit Expense' : 'Add an expense'}
             </h3>
@@ -376,9 +418,9 @@ export default function GroupFinances() {
                   type="text" 
                   value={expenseDesc} 
                   onChange={e => setExpenseDesc(e.target.value)} 
-                  placeholder="Enter a description" 
+                  placeholder="e.g. Dinner, Groceries, Uber" 
                   required
-                  className="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-secondary outline-none shadow-sm"
+                  className="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-secondary outline-none shadow-sm dark:bg-slate-700 dark:text-white"
                 />
               </div>
               <div className="relative w-1/3">
@@ -393,27 +435,27 @@ export default function GroupFinances() {
                   onChange={e => setExpenseAmount(e.target.value)} 
                   placeholder="0.00" 
                   required
-                  className="w-full pl-8 p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-secondary outline-none font-bold shadow-sm"
+                  className="w-full pl-8 p-3 border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-secondary outline-none font-bold shadow-sm dark:bg-slate-700 dark:text-white"
                 />
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-sm bg-slate-50 p-3 rounded border border-slate-100">
-              <span className="text-slate-600 font-medium">Paid by</span>
+            <div className="flex items-center gap-2 text-sm bg-slate-50 dark:bg-slate-700/50 p-3 rounded border border-slate-100 dark:border-slate-700">
+              <span className="text-slate-600 dark:text-slate-300 font-medium">Paid by</span>
               <select 
                 value={paidBy} 
                 onChange={(e) => setPaidBy(e.target.value)}
-                className="p-1.5 border border-slate-300 rounded focus:ring-2 focus:ring-secondary outline-none font-medium bg-white"
+                className="p-1.5 border border-slate-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-secondary outline-none font-medium bg-white dark:bg-slate-700 dark:text-white"
               >
                 {group.members?.map((m: any) => (
                   <option key={m.user_id} value={m.user_id}>{m.user_id === currentUserId ? 'You' : m.user.name}</option>
                 ))}
               </select>
-              <span className="text-slate-600 font-medium">and split</span>
+              <span className="text-slate-600 dark:text-slate-300 font-medium">and split</span>
               <select 
                 value={splitType} 
                 onChange={(e) => setSplitType(e.target.value)}
-                className="p-1.5 border border-slate-300 rounded focus:ring-2 focus:ring-secondary outline-none font-medium bg-white"
+                className="p-1.5 border border-slate-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-secondary outline-none font-medium bg-white dark:bg-slate-700 dark:text-white"
               >
                 <option value="EQUAL">equally</option>
                 <option value="EXACT">by exact amounts</option>
@@ -423,8 +465,8 @@ export default function GroupFinances() {
             </div>
 
             {splitType !== 'EQUAL' && (
-              <div className="bg-slate-50 p-4 rounded border border-slate-200 mt-2">
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center">
+              <div className="bg-slate-50 dark:bg-slate-700 p-4 rounded border border-slate-200 dark:border-slate-600 mt-2">
+                <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3 flex items-center">
                   {splitType === 'EXACT' && <DollarSign className="w-3 h-3 mr-1" />}
                   {splitType === 'PERCENTAGE' && <Percent className="w-3 h-3 mr-1" />}
                   {splitType === 'SHARES' && <Calculator className="w-3 h-3 mr-1" />}
@@ -432,10 +474,10 @@ export default function GroupFinances() {
                 </div>
                 <div className="space-y-2">
                   {group.members?.map((m: any) => (
-                    <div key={m.user_id} className="flex items-center justify-between gap-4 bg-white p-2 border border-slate-100 rounded shadow-sm">
+                    <div key={m.user_id} className="flex items-center justify-between gap-4 bg-white dark:bg-slate-800 p-2 border border-slate-100 dark:border-slate-600 rounded shadow-sm">
                       <div className="flex items-center gap-2">
                         <Avatar name={getUserName(m.user_id)} size="sm" />
-                        <span className="text-sm font-medium text-slate-700">{getUserName(m.user_id)}</span>
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{getUserName(m.user_id)}</span>
                       </div>
                       <div className="relative w-1/3 min-w-[100px]">
                         {splitType === 'EXACT' && <span className="absolute inset-y-0 left-0 pl-2 flex items-center text-slate-500">$</span>}
@@ -446,7 +488,7 @@ export default function GroupFinances() {
                           value={splits[m.user_id] || ''} 
                           onChange={(e) => setSplits({ ...splits, [m.user_id]: e.target.value })}
                           placeholder="0"
-                          className={`w-full p-1.5 border border-slate-300 rounded focus:ring-1 focus:ring-secondary outline-none text-right ${splitType === 'EXACT' ? 'pl-6' : 'pr-6'}`}
+                          className={`w-full p-1.5 border border-slate-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-secondary outline-none text-right dark:bg-slate-700 dark:text-white ${splitType === 'EXACT' ? 'pl-6' : 'pr-6'}`}
                         />
                         {splitType === 'PERCENTAGE' && <span className="absolute inset-y-0 right-0 pr-2 flex items-center text-slate-500">%</span>}
                         {splitType === 'SHARES' && <span className="absolute inset-y-0 right-0 pr-2 flex items-center text-slate-400 text-xs">sh</span>}
@@ -464,10 +506,10 @@ export default function GroupFinances() {
         </div>
       )}
 
-      <div className="grid md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 space-y-6">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-            <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center"><Receipt className="w-5 h-5 mr-2 text-primary" /> Expenses & Settlements</h3>
+      <div className="flex flex-col gap-8">
+        <div className="space-y-6 w-full">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 transition-colors duration-200">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center"><Receipt className="w-5 h-5 mr-2 text-primary dark:text-indigo-400" /> Expenses & Settlements</h3>
             
             <div className="mb-4">
               <FilterBar 
@@ -484,210 +526,111 @@ export default function GroupFinances() {
             ) : filteredActivities.length === 0 ? (
               <div className="text-center py-8 bg-slate-50 rounded-lg border border-slate-100 text-slate-500">
                 No activity matches "{search}".
-                <button onClick={() => setSearch('')} className="block mt-2 mx-auto text-primary hover:underline">Clear filter</button>
+                <button onClick={() => setSearch('')} className="block mt-2 mx-auto text-primary dark:text-indigo-400 hover:underline">Clear filter</button>
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-                {/* Desktop Table View */}
-                <div className="hidden sm:block overflow-x-auto">
+              <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors duration-200">
+                <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 border-y border-slate-200 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                        <th className="p-3 w-10"></th>
-                        <th className="p-3">Description</th>
-                        <th className="p-3">Who</th>
-                        <th className="p-3 text-right">Amount</th>
-                        <th className="p-3 w-10"></th>
+                      <tr className="bg-slate-50 dark:bg-slate-900/50 border-y border-slate-200 dark:border-slate-700 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
+                        <th className="p-4 w-10"></th>
+                        <th className="p-4">Date</th>
+                        <th className="p-4 w-1/4">Description</th>
+                        <th className="p-4">Paid By</th>
+                        <th className="p-4 text-right">Total Amount</th>
+                        <th className="p-4 w-1/3">Details & Splits</th>
+                        {!isViewer && <th className="p-4 w-20 text-center">Actions</th>}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                       {paginatedActivities.map(act => {
-                        const isExpanded = selectedActivity === act.id;
                         return (
-                          <React.Fragment key={act.id}>
-                            <tr 
-                              className={`hover:bg-slate-50 transition cursor-pointer group ${act.type === 'settlement' ? 'border-l-4 border-l-accent' : ''}`}
-                              onClick={() => setSelectedActivity(isExpanded ? null : act.id)}
-                            >
-                              <td className="p-4">
-                                <div className={`p-2 rounded-full inline-block ${act.type === 'expense' ? 'bg-secondary/10 text-secondary' : 'bg-accent/10 text-accent'}`}>
-                                  {act.type === 'expense' ? <Receipt className="w-4 h-4" /> : <HandCoins className="w-4 h-4" />}
-                                </div>
-                              </td>
-                              <td className="p-4">
-                                <div className="font-semibold text-slate-800 flex items-center gap-2">
-                                  {act.type === 'expense' ? act.data.description : 'Payment'}
-                                  {act.type === 'expense' && act.data.category && (
-                                    <Badge variant="secondary">{act.data.category}</Badge>
-                                  )}
-                                </div>
-                                <div className="text-xs text-slate-400 mt-1">{new Date(act.date).toLocaleDateString()}</div>
-                              </td>
-                              <td className="p-4 text-sm text-slate-600">
+                          <tr 
+                            key={act.id} 
+                            className={`hover:bg-slate-50 dark:hover:bg-slate-700/50 transition ${act.type === 'settlement' ? 'border-l-4 border-l-accent' : ''}`}
+                          >
+                            <td className="p-4">
+                              <div className={`p-2 rounded-full inline-flex items-center justify-center ${act.type === 'expense' ? 'bg-secondary/10 text-secondary' : 'bg-accent/10 text-accent'}`}>
+                                {act.type === 'expense' ? <Receipt className="w-4 h-4" /> : <HandCoins className="w-4 h-4" />}
+                              </div>
+                            </td>
+                            <td className="p-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                              {new Date(act.date).toLocaleDateString()}
+                            </td>
+                            <td className="p-4">
+                              <div className="font-semibold text-slate-800 dark:text-slate-200">
+                                {act.type === 'expense' ? act.data.description : 'Payment'}
+                              </div>
+                              {act.type === 'expense' && act.data.category && (
+                                <Badge variant="secondary" className="mt-1">{act.data.category}</Badge>
+                              )}
+                            </td>
+                            <td className="p-4">
+                              <div className="flex flex-col items-start gap-1">
                                 {act.type === 'expense' ? (
-                                  <div className="flex flex-col items-start gap-1">
+                                  <>
                                     <div className="flex items-center gap-2">
                                       <Avatar name={getUserName(act.data.paid_by)} size="sm" />
-                                      <span><span className="font-medium text-slate-800">{getUserName(act.data.paid_by)}</span> paid</span>
+                                      <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{getUserName(act.data.paid_by)}</span>
                                     </div>
                                     <SplitTypeBadge type={act.data.split_type} />
-                                  </div>
+                                  </>
                                 ) : (
                                   <div className="flex items-center gap-2">
                                     <Avatar name={getUserName(act.data.from_user)} size="sm" />
-                                    <span>{getUserName(act.data.from_user)} &rarr;</span>
-                                    <Avatar name={getUserName(act.data.to_user)} size="sm" />
-                                    <span>{getUserName(act.data.to_user)}</span>
+                                    <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{getUserName(act.data.from_user)}</span>
                                   </div>
                                 )}
-                              </td>
-                              <td className="p-4 text-right font-bold text-slate-800">
-                                ${parseFloat(act.data.amount).toFixed(2)}
-                              </td>
-                              <td className="p-4 text-slate-400 text-right">
-                                <ChevronDown className={`w-4 h-4 inline-block transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
-                              </td>
-                            </tr>
-                            
-                            {isExpanded && (
-                              <tr className="bg-slate-50">
-                                <td colSpan={5} className="p-4 border-b border-slate-200">
-                                  <div className="bg-white p-4 rounded border border-slate-200 shadow-sm relative">
-                                    {act.type === 'expense' ? (
-                                      <>
-                                        <div className="flex justify-between items-center mb-4">
-                                          <h5 className="text-xs font-bold uppercase tracking-wider text-slate-500">Split Details</h5>
-                                          <div className="flex gap-2">
-                                            <button onClick={(e) => { e.stopPropagation(); handleEditExpense(act.data); }} className="text-slate-400 hover:text-primary transition p-1" title="Edit">
-                                              <Edit2 className="w-4 h-4" />
-                                            </button>
-                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteExpense(act.id); }} className="text-slate-400 hover:text-red-500 transition p-1" title="Delete">
-                                              <Trash2 className="w-4 h-4" />
-                                            </button>
-                                          </div>
-                                        </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                          {act.data.shares?.map((share: any) => (
-                                            <div key={share.id} className="flex justify-between items-center bg-slate-50 p-2 rounded text-sm">
-                                              <div className="flex items-center gap-2">
-                                                <Avatar name={getUserName(share.user_id)} size="sm" />
-                                                <span className="text-slate-700 font-medium">{getUserName(share.user_id)}</span>
-                                              </div>
-                                              <span className="font-bold text-slate-800">${parseFloat(share.amount_owed).toFixed(2)}</span>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <div className="flex justify-between items-center mb-2">
-                                          <h5 className="text-xs font-bold uppercase tracking-wider text-slate-500">Settlement</h5>
-                                          <button onClick={(e) => { e.stopPropagation(); handleDeleteSettlement(act.id); }} className="flex items-center text-slate-400 hover:text-red-500 transition text-xs font-medium px-2 py-1 bg-slate-50 border rounded">
-                                            <Undo className="w-3 h-3 mr-1" /> Undo
-                                          </button>
-                                        </div>
-                                        <p className="text-sm text-slate-700 mt-2">
-                                          {act.data.note ? <span className="italic">"{act.data.note}"</span> : 'No note attached.'}
-                                        </p>
-                                      </>
-                                    )}
+                              </div>
+                            </td>
+                            <td className="p-4 text-right font-bold text-slate-800 dark:text-slate-100">
+                              ${parseFloat(act.data.amount).toFixed(2)}
+                            </td>
+                            <td className="p-4">
+                              {act.type === 'expense' ? (
+                                <div className="flex flex-wrap gap-1.5">
+                                  {act.data.shares?.map((share: any) => (
+                                    <span key={share.id} className="inline-flex items-center text-xs px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded border border-slate-200 dark:border-slate-600 shadow-sm">
+                                      <Avatar name={getUserName(share.user_id)} size="xs" className="mr-1 hidden sm:block w-3 h-3 text-[8px]" />
+                                      {getUserName(share.user_id)}: <span className="font-bold ml-1">${parseFloat(share.amount_owed).toFixed(2)}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-sm text-slate-600 dark:text-slate-400">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span>Paid to</span>
+                                    <Avatar name={getUserName(act.data.to_user)} size="sm" />
+                                    <span className="font-medium text-slate-800 dark:text-slate-200">{getUserName(act.data.to_user)}</span>
                                   </div>
-                                </td>
-                              </tr>
+                                  {act.data.note && <span className="italic text-xs">"{act.data.note}"</span>}
+                                </div>
+                              )}
+                            </td>
+                            {!isViewer && (
+                              <td className="p-4 text-center">
+                                {act.type === 'expense' ? (
+                                  <div className="flex justify-center gap-1">
+                                    <button onClick={(e) => { e.stopPropagation(); handleEditExpense(act.data); }} className="text-slate-400 hover:text-primary transition p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700" title="Edit">
+                                      <Edit2 className="w-4 h-4" />
+                                    </button>
+                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteExpense(act.id); }} className="text-slate-400 hover:text-red-500 transition p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20" title="Delete">
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button onClick={(e) => { e.stopPropagation(); handleDeleteSettlement(act.id); }} className="mx-auto flex items-center text-slate-400 hover:text-red-500 transition text-xs font-medium px-2 py-1 bg-white dark:bg-slate-800 border dark:border-slate-600 rounded shadow-sm hover:border-red-200">
+                                    <Undo className="w-3 h-3 mr-1" /> Undo
+                                  </button>
+                                )}
+                              </td>
                             )}
-                          </React.Fragment>
+                          </tr>
                         );
                       })}
                     </tbody>
                   </table>
-                </div>
-
-                {/* Mobile Card View */}
-                <div className="block sm:hidden divide-y divide-slate-100">
-                  {paginatedActivities.map(act => {
-                    const isExpanded = selectedActivity === act.id;
-                    return (
-                      <div key={act.id} className={`flex flex-col ${act.type === 'settlement' ? 'border-l-4 border-l-accent' : ''}`}>
-                        <div 
-                          className="p-4 hover:bg-slate-50 transition cursor-pointer"
-                          onClick={() => setSelectedActivity(isExpanded ? null : act.id)}
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="font-semibold text-slate-800 flex flex-col gap-1">
-                              <span>{act.type === 'expense' ? act.data.description : 'Payment'}</span>
-                              <div className="flex items-center gap-2">
-                                {act.type === 'expense' && <SplitTypeBadge type={act.data.split_type} />}
-                                {act.type === 'expense' && act.data.category && <Badge variant="secondary">{act.data.category}</Badge>}
-                                {act.type === 'settlement' && <Badge variant="accent">Payment</Badge>}
-                              </div>
-                            </div>
-                            <div className="text-right flex flex-col items-end">
-                              <span className="font-bold text-slate-800">${parseFloat(act.data.amount).toFixed(2)}</span>
-                              <span className="text-xs text-slate-400">{new Date(act.date).toLocaleDateString()}</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between text-sm text-slate-600 mt-3">
-                            {act.type === 'expense' ? (
-                              <div className="flex items-center gap-2">
-                                <Avatar name={getUserName(act.data.paid_by)} size="sm" />
-                                <span><span className="font-medium text-slate-800">{getUserName(act.data.paid_by)}</span> paid</span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <Avatar name={getUserName(act.data.from_user)} size="sm" />
-                                <span>&rarr;</span>
-                                <Avatar name={getUserName(act.data.to_user)} size="sm" />
-                              </div>
-                            )}
-                            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
-                          </div>
-                        </div>
-
-                        {isExpanded && (
-                          <div className="bg-slate-50 p-4 border-t border-slate-100">
-                            {act.type === 'expense' ? (
-                              <>
-                                <div className="flex justify-between items-center mb-3">
-                                  <h5 className="text-xs font-bold uppercase tracking-wide text-slate-500">Split Details</h5>
-                                  <div className="flex gap-2">
-                                    <button onClick={(e) => { e.stopPropagation(); handleEditExpense(act.data); }} className="text-slate-400 hover:text-primary transition p-1">
-                                      <Edit2 className="w-4 h-4" />
-                                    </button>
-                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteExpense(act.id); }} className="text-slate-400 hover:text-red-500 transition p-1">
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                </div>
-                                <div className="space-y-2">
-                                  {act.data.shares?.map((share: any) => (
-                                    <div key={share.id} className="flex justify-between items-center bg-white border border-slate-200 p-2 rounded text-sm">
-                                      <div className="flex items-center gap-2">
-                                        <Avatar name={getUserName(share.user_id)} size="sm" />
-                                        <span className="text-slate-700 font-medium">{getUserName(share.user_id)}</span>
-                                      </div>
-                                      <span className="font-bold text-slate-800">${parseFloat(share.amount_owed).toFixed(2)}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                                <div className="flex justify-between items-center mb-2">
-                                  <h5 className="text-xs font-bold uppercase tracking-wide text-slate-500">Settlement</h5>
-                                  <button onClick={(e) => { e.stopPropagation(); handleDeleteSettlement(act.id); }} className="flex items-center text-slate-400 hover:text-red-500 transition text-xs font-medium px-2 py-1 bg-white border rounded">
-                                    <Undo className="w-3 h-3 mr-1" /> Undo
-                                  </button>
-                                </div>
-                                <p className="text-sm text-slate-700 mt-2">
-                                  {act.data.note ? <span className="italic">"{act.data.note}"</span> : 'No note attached.'}
-                                </p>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
                 </div>
               </div>
             )}
@@ -726,83 +669,66 @@ export default function GroupFinances() {
           </div>
         </div>
         
-        <div className="space-y-6">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-            <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center"><List className="w-4 h-4 mr-2 text-primary" /> Simplified Debts</h3>
-            {simplifiedDebts.length === 0 ? (
-              <p className="text-slate-500 text-sm bg-slate-50 p-4 rounded text-center border border-slate-100">Everyone is settled up!</p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {simplifiedDebts.map((debt, idx) => (
-                  <div key={idx} className="flex flex-row items-center justify-between bg-slate-50 p-3 rounded border border-slate-100 hover:bg-slate-100 transition">
-                    <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 pr-2">
-                      <div className="flex-shrink-0">
-                        <Avatar name={getUserName(debt.from)} size="sm" />
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-1 text-sm text-slate-600 min-w-0">
-                        <span className="font-medium text-slate-800 truncate max-w-[80px] sm:max-w-[120px]" title={getUserName(debt.from)}>{getUserName(debt.from)}</span>
-                        <span>owes</span>
-                        <span className="font-medium text-slate-800 truncate max-w-[80px] sm:max-w-[120px]" title={getUserName(debt.to)}>{getUserName(debt.to)}</span>
-                      </div>
-                    </div>
-                    <div className="text-right text-accent font-bold flex-shrink-0 whitespace-nowrap">${debt.amount.toFixed(2)}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="space-y-6 w-full">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors duration-200">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 flex items-center">
+                <List className="w-5 h-5 mr-2 text-primary dark:text-indigo-400" /> Member Balances & Debts
+              </h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
+                    <th className="p-4">Member</th>
+                    <th className="p-4 text-right">Net Balance</th>
+                    <th className="p-4">Settlements to Make</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                  {Object.entries(balances).map(([userId, balance]) => {
+                    const userDebts = simplifiedDebts.filter(d => d.from === userId);
+                    const isSettled = balance === 0 && userDebts.length === 0;
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-            <h3 className="font-bold text-slate-800 mb-4 flex items-center"><DollarSign className="w-4 h-4 mr-2 text-primary" /> Raw Balances</h3>
-            <ul className="space-y-2 mb-4 text-sm">
-              {Object.entries(balances).map(([userId, balance]) => {
-                const userDebts = simplifiedDebts.filter(d => d.from === userId || d.to === userId);
-                const isSelected = selectedUser === userId;
-                
-                return (
-                  <li key={userId} className="border-b pb-2 last:border-0">
-                    <div 
-                      className="flex justify-between items-center cursor-pointer hover:bg-slate-50 p-2 -mx-2 rounded transition"
-                      onClick={() => setSelectedUser(isSelected ? null : userId)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Avatar name={getUserName(userId)} size="sm" />
-                        <span className="text-slate-700 font-medium">{getUserName(userId)}</span>
-                      </div>
-                      <span className={`font-semibold ${balance > 0 ? 'text-green-600' : balance < 0 ? 'text-red-600' : 'text-slate-500'}`}>
-                        {balance > 0 ? '+' : ''}{balance.toFixed(2)}
-                      </span>
-                    </div>
-                    
-                    {isSelected && (
-                      <div className="bg-slate-50 p-3 mt-1 rounded text-xs border border-slate-100">
-                        <div className="font-bold text-slate-500 mb-2 uppercase tracking-wide">Specific Debts</div>
-                        {userDebts.length === 0 ? (
-                          <div className="text-slate-400">No active debts</div>
-                        ) : (
-                          <ul className="space-y-1">
-                            {userDebts.map((d, i) => (
-                              <li key={i} className="flex justify-between items-center py-1 border-b last:border-0 border-slate-200">
-                                <span className="flex items-center gap-1.5">
-                                  {d.from === userId ? 'Owes ' : 'Is owed by '} 
-                                  <span className="font-medium text-slate-700 flex items-center gap-1">
-                                    <Avatar name={getUserName(d.from === userId ? d.to : d.from)} size="sm" className="w-4 h-4 text-[10px]" />
-                                    {getUserName(d.from === userId ? d.to : d.from)}
-                                  </span>
-                                </span>
-                                <span className={d.from === userId ? 'text-red-600' : 'text-green-600'}>
-                                  ${d.amount.toFixed(2)}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+                    return (
+                      <tr key={userId} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <Avatar name={getUserName(userId)} size="sm" />
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">{getUserName(userId)}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 text-right font-bold">
+                          <span className={`${balance > 0 ? 'text-green-600 dark:text-green-400' : balance < 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                            {balance > 0 ? '+' : ''}{balance.toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          {isSettled ? (
+                            <span className="text-xs font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">Settled up</span>
+                          ) : userDebts.length === 0 && balance < 0 ? (
+                            <span className="text-xs font-medium text-slate-400">Waiting for others</span>
+                          ) : userDebts.length === 0 && balance > 0 ? (
+                            <span className="text-xs font-medium text-slate-400">Will receive funds</span>
+                          ) : (
+                            <div className="flex flex-col gap-1.5">
+                              {userDebts.map((d, i) => (
+                                <div key={i} className="inline-flex items-center text-xs px-2 py-1 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded border border-red-100 dark:border-red-900/30 w-fit">
+                                  <span>Owes</span>
+                                  <Avatar name={getUserName(d.to)} size="xs" className="mx-1.5 w-3 h-3 text-[8px]" />
+                                  <span className="font-semibold">{getUserName(d.to)}</span>
+                                  <span className="font-bold ml-1.5">${d.amount.toFixed(2)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

@@ -2,23 +2,24 @@
 
 FairShare is a modern, full-stack expense-splitting application built to take the headache out of shared bills. Whether you are splitting rent with roommates, organizing a group trip, or just keeping track of dinner tabs, FairShare ensures everyone knows exactly who owes what.
 
-
-
 ## ✨ Features
 
 - **Group Management:** Create groups and invite friends to keep expenses organized by event, apartment, or trip.
+- **Role-Based Access Control (RBAC):** Group creators act as **Admins** and can manage member permissions. Members can be **Editors** (add/edit expenses and members) or **Viewers** (read-only access).
+- **Admin Dashboard:** A dedicated command center for Admins to track the financial progress of all groups they manage. 
+- **Trip Budgets:** Set total budgets for trips/groups when creating them. Admins and members can track the Total Spent and Total Remaining dynamically.
+- **Easy Onboarding:** Invite members effortlessly! The system auto-generates credentials so friends can log in and view their specific group finances instantly.
 - **Flexible Splitting:** Add expenses and split them *equally*, by *exact amounts*, by *percentages*, or by *shares*.
 - **Debt Simplification:** A built-in algorithm minimizes the total number of transactions required to settle all debts within a group.
-- **Data Visualization:** Beautiful, interactive charts (powered by Recharts) provide a quick visual breakdown of "Who Spent What".
-- **Fluid UI:** Enjoy a premium, app-like experience with buttery-smooth page transitions and animations powered by Framer Motion.
-- **Activity Tracking:** A detailed activity log keeps track of every expense added, edited, or deleted.
+- **Data Visualization & Analytics:** Get a quick visual breakdown of "Who Spent What" alongside detailed activity logs tracking every payment and expense.
+- **Fluid UI:** Enjoy a premium, app-like experience with buttery-smooth page transitions, micro-animations, and responsive layouts powered by Tailwind CSS.
 
 ## 🛠️ Tech Stack
 
 **Frontend:**
 - **React.js** (built with Vite for lightning-fast HMR)
 - **Tailwind CSS** (for highly customizable, utility-first styling)
-- **Framer Motion** (for smooth page transitions and micro-animations)
+- **Lucide React** (beautiful, consistent SVG icons)
 - **Recharts** (for elegant data visualization)
 - **React Router** (for client-side routing)
 

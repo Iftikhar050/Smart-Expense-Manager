@@ -7,21 +7,22 @@ interface AvatarProps {
 }
 
 export function Avatar({ name, size = 'md', className = '' }: AvatarProps) {
-  const initial = name ? name.charAt(0).toUpperCase() : '?';
-  
   const sizeClasses = {
-    sm: 'w-6 h-6 text-xs',
-    md: 'w-8 h-8 text-sm',
-    lg: 'w-10 h-10 text-base',
+    sm: 'w-6 h-6',
+    md: 'w-8 h-8',
+    lg: 'w-10 h-10',
   };
 
+  const seed = name ? encodeURIComponent(name) : 'default';
+  const avatarUrl = `https://api.dicebear.com/7.x/notionists/svg?seed=${seed}&backgroundColor=f1f5f9`;
+
   return (
-    <div 
-      className={`rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold ${sizeClasses[size]} ${className}`}
+    <img 
+      src={avatarUrl}
+      alt={name}
+      className={`rounded-full bg-slate-100 object-cover ${sizeClasses[size]} ${className}`}
       title={name}
-    >
-      {initial}
-    </div>
+    />
   );
 }
 

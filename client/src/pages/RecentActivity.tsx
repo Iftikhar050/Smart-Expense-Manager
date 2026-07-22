@@ -28,7 +28,7 @@ export default function RecentActivity() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-primary mb-8 flex items-center gap-3">
+      <h1 className="text-3xl font-bold text-primary dark:text-indigo-400 mb-8 flex items-center gap-3">
         <Clock className="w-8 h-8 text-secondary" />
         Recent Activity
       </h1>
@@ -53,7 +53,7 @@ export default function RecentActivity() {
               </div>
               
               <div 
-                className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
+                className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
                 onClick={() => setSelectedActivity(selectedActivity === idx ? null : idx)}
               >
                 <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -70,20 +70,20 @@ export default function RecentActivity() {
                     
                     {item.type === 'expense' ? (
                       <div>
-                        <div className="text-lg font-bold text-slate-800 mb-1 group-hover:text-primary transition-colors">
+                        <div className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1 group-hover:text-primary dark:group-hover:text-indigo-400 transition-colors">
                           {item.data.description}
                         </div>
-                        <div className="text-sm text-slate-600">
-                          Added in <Link to={`/groups/${item.data.group_id}`} className="font-semibold text-primary hover:underline" onClick={e => e.stopPropagation()}>{item.data.group.name}</Link>
+                        <div className="text-sm text-slate-600 dark:text-slate-400">
+                          Added in <Link to={`/groups/${item.data.group_id}`} className="font-semibold text-primary dark:text-indigo-400 hover:underline" onClick={e => e.stopPropagation()}>{item.data.group.name}</Link>
                         </div>
                       </div>
                     ) : (
                       <div>
-                        <div className="text-lg font-bold text-slate-800 mb-1 group-hover:text-primary transition-colors">
+                        <div className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1 group-hover:text-primary dark:group-hover:text-indigo-400 transition-colors">
                           {item.data.sender?.name} paid {item.data.receiver?.name}
                         </div>
-                        <div className="text-sm text-slate-600">
-                          In <Link to={`/groups/${item.data.group_id}`} className="font-semibold text-primary hover:underline" onClick={e => e.stopPropagation()}>{item.data.group.name}</Link>
+                        <div className="text-sm text-slate-600 dark:text-slate-400">
+                          In <Link to={`/groups/${item.data.group_id}`} className="font-semibold text-primary dark:text-indigo-400 hover:underline" onClick={e => e.stopPropagation()}>{item.data.group.name}</Link>
                         </div>
                       </div>
                     )}
@@ -91,7 +91,7 @@ export default function RecentActivity() {
                   
                   <div className="text-left sm:text-right">
                     <div className="text-sm text-slate-500 font-medium mb-1 uppercase tracking-wide">Amount</div>
-                    <div className={`text-2xl font-bold ${item.type === 'expense' ? 'text-slate-800' : 'text-accent'}`}>
+                    <div className={`text-2xl font-bold ${item.type === 'expense' ? 'text-slate-800 dark:text-slate-100' : 'text-accent'}`}>
                       ${Number(item.data.amount).toFixed(2)}
                     </div>
                   </div>
@@ -99,21 +99,21 @@ export default function RecentActivity() {
                 
                 {/* Expanded Details */}
                 <div className={`overflow-hidden transition-all duration-300 ease-in-out ${selectedActivity === idx ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-                  <div className="bg-slate-50 p-4 border-t border-slate-200">
+                  <div className="bg-slate-50 dark:bg-slate-900/50 p-4 border-t border-slate-200 dark:border-slate-700">
                     {item.type === 'expense' ? (
                       <div>
                         <div className="flex justify-between items-center mb-3">
                           <h5 className="text-xs font-bold uppercase tracking-wider text-slate-500">Split Details</h5>
-                          <span className="text-xs text-slate-600 bg-white px-2 py-1 border border-slate-200 rounded font-medium shadow-sm">
+                          <span className="text-xs text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 px-2 py-1 border border-slate-200 dark:border-slate-700 rounded font-medium shadow-sm">
                             Split method: {item.data.split_type === 'EQUAL' ? 'Equally' : item.data.split_type === 'EXACT' ? 'Exact amounts' : item.data.split_type === 'PERCENTAGE' ? 'Percentages' : 'Shares'}
                           </span>
                         </div>
-                        <p className="text-sm text-slate-600 mb-3">Paid by <span className="font-semibold text-slate-800">{item.data.payer?.name}</span></p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">Paid by <span className="font-semibold text-slate-800 dark:text-slate-200">{item.data.payer?.name}</span></p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {item.data.shares?.map((share: any) => (
-                            <div key={share.id} className="flex justify-between items-center bg-white p-2 rounded border border-slate-100 shadow-sm text-sm">
-                              <span className="text-slate-700 font-medium">{share.user.name}</span>
-                              <span className="font-bold text-slate-800">${parseFloat(share.amount_owed).toFixed(2)}</span>
+                            <div key={share.id} className="flex justify-between items-center bg-white dark:bg-slate-800 p-2 rounded border border-slate-100 dark:border-slate-700 shadow-sm text-sm">
+                              <span className="text-slate-700 dark:text-slate-300 font-medium">{share.user.name}</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-100">${parseFloat(share.amount_owed).toFixed(2)}</span>
                             </div>
                           ))}
                         </div>

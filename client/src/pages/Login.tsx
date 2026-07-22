@@ -36,7 +36,7 @@ export default function Login() {
   return (
     <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-sm border border-slate-200">
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
-      <h2 className="text-2xl font-bold mb-6 text-primary text-center">
+      <h2 className="text-2xl font-bold mb-6 text-primary dark:text-indigo-400 text-center">
         {isRegister ? 'Join FairShare' : 'Welcome to FairShare'}
       </h2>
       <form onSubmit={handleSubmit} className="space-y-4">

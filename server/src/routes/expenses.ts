@@ -50,6 +50,12 @@ router.post('/', asyncHandler(async (req: any, res) => {
     return;
   }
   
+  const currentUserMember = group.members.find(m => m.user_id === req.userId);
+  if (!currentUserMember || currentUserMember.role === 'VIEWER') {
+    res.status(403).json({ error: 'Viewers cannot create expenses' });
+    return;
+  }
+  
   const totalAmount = new Decimal(amount);
   let sharesData: { user_id: string, amount_owed: number }[] = [];
   
@@ -221,6 +227,12 @@ router.put('/:expenseId', asyncHandler(async (req: any, res) => {
     return;
   }
   
+  const currentUserMember = group.members.find(m => m.user_id === req.userId);
+  if (!currentUserMember || currentUserMember.role === 'VIEWER') {
+    res.status(403).json({ error: 'Viewers cannot edit expenses' });
+    return;
+  }
+  
   const totalAmount = new Decimal(amount);
   let sharesData: { user_id: string, amount_owed: number }[] = [];
   
@@ -346,6 +358,14 @@ router.delete('/:expenseId', asyncHandler(async (req: any, res) => {
   
   if (expense.created_by !== req.userId && expense.paid_by !== req.userId) {
     res.status(403).json({ error: 'Not authorized to delete this expense' });
+    return;
+  }
+  
+  const groupMember = await prisma.groupMember.findUnique({
+    where: { group_id_user_id: { group_id, user_id: req.userId } }
+  });
+  if (!groupMember || groupMember.role === 'VIEWER') {
+    res.status(403).json({ error: 'Viewers cannot delete expenses' });
     return;
   }
   

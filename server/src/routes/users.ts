@@ -25,7 +25,7 @@ router.get('/dashboard', asyncHandler(async (req: any, res) => {
       },
       expenses: {
         where: { deleted_at: null },
-        include: { shares: true }
+        include: { shares: true, payer: { select: { id: true, name: true } } }
       },
       settlements: { where: { deleted_at: null } }
     }
@@ -75,15 +75,31 @@ router.get('/dashboard', asyncHandler(async (req: any, res) => {
     if (lastExp && lastExp.created_at > lastActivityDate) lastActivityDate = lastExp.created_at;
     if (lastSet && lastSet.settled_at > lastActivityDate) lastActivityDate = lastSet.settled_at;
 
+    const activity = [
+      ...group.expenses.map(e => ({ type: 'expense', date: e.created_at, data: e })),
+      ...group.settlements.map(s => ({ 
+        type: 'settlement', 
+        date: s.settled_at, 
+        data: {
+          ...s,
+          sender: group.members.find(m => m.user_id === s.from_user)?.user,
+          receiver: group.members.find(m => m.user_id === s.to_user)?.user
+        }
+      }))
+    ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 10);
+
     groupDetails.push({
       id: group.id,
       name: group.name,
+      budget: Number(group.budget || 0),
       totalSpent: groupSpent.toNumber(),
       userDebt: userGroupDebt.toNumber(),
       membersSpending,
       lastActivityDate,
       memberCount: group.members.length,
-      members: group.members.map(m => ({ id: m.user.id, name: m.user.name }))
+      myRole: group.members.find(m => m.user_id === req.userId)?.role,
+      members: group.members.map(m => ({ id: m.user.id, name: m.user.name })),
+      activity
     });
     
     for (const debt of simplified) {

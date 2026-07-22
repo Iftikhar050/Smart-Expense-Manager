@@ -5,6 +5,7 @@ import authRoutes from './routes/auth';
 import groupRoutes from './routes/groups';
 import expenseRoutes from './routes/expenses';
 import userRoutes from './routes/users';
+import adminRoutes from './routes/admin';
 import rateLimit from 'express-rate-limit';
 
 dotenv.config();
@@ -32,6 +33,7 @@ app.use('/auth', authRoutes);
 app.use('/groups', groupRoutes);
 app.use('/groups/:id/expenses', expenseRoutes);
 app.use('/users', userRoutes);
+app.use('/admin', adminRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });

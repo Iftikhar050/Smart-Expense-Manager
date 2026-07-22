@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id               String            @id @default(uuid())
+  name             String
+  email            String?           @unique
+  password_hash    String?
+  is_dummy         Boolean           @default(false)
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @default(now()) @updatedAt  
+  groupsCreated    Group[]           @relation("GroupCreator")
+  groupMemberships GroupMember[]
+  expensesPaid     Expense[]         @relation("ExpensePayer")
+  expensesCreated  Expense[]         @relation("ExpenseCreator")
+  expenseShares    ExpenseShare[]
+  settlementsSent  Settlement[]      @relation("SettlementSender")
+  settlementsRecv  Settlement[]      @relation("SettlementReceiver")
+}
+
+model Group {
+  id         String   @id @default(uuid())
+  name       String
+  created_by String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  creator    User          @relation("GroupCreator", fields: [created_by], references: [id])
+  members    GroupMember[]
+  expenses   Expense[]
+  settlements Settlement[]
+}
+
+model GroupMember {
+  id         String   @id @default(uuid())
+  group_id   String
+  user_id    String
+  joined_at  DateTime @default(now())
+
+  group      Group    @relation(fields: [group_id], references: [id])
+  user       User     @relation(fields: [user_id], references: [id])
+
+  @@unique([group_id, user_id])
+}
+
+enum SplitType {
+  EQUAL
+  EXACT
+  PERCENTAGE
+  SHARES
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  group_id    String
+  paid_by     String
+  amount      Decimal
+  description String
+  category    String?
+  split_type  SplitType
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
+  deleted_at  DateTime?
+  created_by  String
+
+  group       Group          @relation(fields: [group_id], references: [id])
+  payer       User           @relation("ExpensePayer", fields: [paid_by], references: [id])
+  creator     User           @relation("ExpenseCreator", fields: [created_by], references: [id])
+  shares      ExpenseShare[]
+}
+
+model ExpenseShare {
+  id          String   @id @default(uuid())
+  expense_id  String
+  user_id     String
+  amount_owed Decimal
+
+  expense     Expense  @relation(fields: [expense_id], references: [id])
+  user        User     @relation(fields: [user_id], references: [id])
+}
+
+model Settlement {
+  id          String   @id @default(uuid())
+  group_id    String
+  from_user   String
+  to_user     String
+  amount      Decimal
+  settled_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
+  deleted_at  DateTime?
+  note        String?
+
+  group       Group    @relation(fields: [group_id], references: [id])
+  sender      User     @relation("SettlementSender", fields: [from_user], references: [id])
+  receiver    User     @relation("SettlementReceiver", fields: [to_user], references: [id])
+}

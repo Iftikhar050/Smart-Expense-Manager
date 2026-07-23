@@ -18,30 +18,28 @@ router.get('/dashboard', asyncHandler(async (req: any, res) => {
   
   const groupIds = adminGroups.map(g => g.group_id);
   
-  // Fetch expenses for these groups
-  const expenses = await prisma.expense.findMany({
-    where: { group_id: { in: groupIds }, deleted_at: null },
-    include: { 
-      payer: true, 
-      group: true,
-      shares: { include: { user: true } }
-    },
-    orderBy: { created_at: 'desc' },
-    take: 100
-  });
-  
-  // Fetch settlements for these groups
-  const settlements = await prisma.settlement.findMany({
-    where: { group_id: { in: groupIds }, deleted_at: null },
-    include: { sender: true, receiver: true, group: true },
-    orderBy: { settled_at: 'desc' },
-    take: 100
-  });
-  
-  // Calculate Admin Dashboard metrics per group
-  const groups = await prisma.group.findMany({
-    where: { id: { in: groupIds } }
-  });
+  // Fetch expenses, settlements, and groups concurrently
+  const [expenses, settlements, groups] = await Promise.all([
+    prisma.expense.findMany({
+      where: { group_id: { in: groupIds }, deleted_at: null },
+      include: { 
+        payer: true, 
+        group: true,
+        shares: { include: { user: true } }
+      },
+      orderBy: { created_at: 'desc' },
+      take: 100
+    }),
+    prisma.settlement.findMany({
+      where: { group_id: { in: groupIds }, deleted_at: null },
+      include: { sender: true, receiver: true, group: true },
+      orderBy: { settled_at: 'desc' },
+      take: 100
+    }),
+    prisma.group.findMany({
+      where: { id: { in: groupIds } }
+    })
+  ]);
   
   const groupsData = groups.map(group => {
     const groupExpenses = expenses.filter(e => e.group_id === group.id);

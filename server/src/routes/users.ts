@@ -146,23 +146,20 @@ router.get('/activity', asyncHandler(async (req: any, res) => {
   });
   const groupIds = userGroups.map(g => g.group_id);
   
-  const expenses = await prisma.expense.findMany({
-    where: { group_id: { in: groupIds }, deleted_at: null },
-    include: { 
-      payer: true, 
-      group: true,
-      shares: { include: { user: true } }
-    },
-    orderBy: { created_at: 'desc' },
-    take: 50
-  });
-  
-  const settlements = await prisma.settlement.findMany({
-    where: { group_id: { in: groupIds }, deleted_at: null },
-    include: { sender: true, receiver: true, group: true },
-    orderBy: { settled_at: 'desc' },
-    take: 50
-  });
+  const [expenses, settlements] = await Promise.all([
+    prisma.expense.findMany({
+      where: { group_id: { in: groupIds }, deleted_at: null },
+      include: { group: true, shares: { include: { user: true } }, payer: true },
+      orderBy: { created_at: 'desc' },
+      take: 50
+    }),
+    prisma.settlement.findMany({
+      where: { group_id: { in: groupIds }, deleted_at: null },
+      include: { group: true, sender: true, receiver: true },
+      orderBy: { settled_at: 'desc' },
+      take: 50
+    })
+  ]);
   
   const activity = [
     ...expenses.map(e => ({ type: 'expense', date: e.created_at, data: e })),
